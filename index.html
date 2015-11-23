@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+
+        <title>A presentation about ponies</title>
+
+        <meta name="description" content="A presentation about ponies">
+        <meta name="author" content="JoliCode">
+
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <link rel="stylesheet" href="css/reveal.min.css">
+        <link rel="stylesheet" href="css/theme/jolicode.css" id="theme">
+
+        <!-- For syntax highlighting -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+        <script>
+            document.write('<link rel="stylesheet" href="css/print/' + ( window.location.search.match(/print-pdf/gi) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">');
+        </script>
+
+        <!--[if lt IE 9]>
+        <script src="lib/js/html5shiv.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-state="jolistate">
+                    <h3>Liberez vous de votre client HTTP avec PSR7 et Httplug.</h3>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Coucou !</h2>
+                    <div class="spacer"></div>
+                    <h3 class="center">Joel Wurtz</h3>
+
+                    <p class="center">Dev & Ops @Jolicode</p>
+
+                    <p class="center"><a href="https://twitter.com/joelwurtz"><img src="images/twitter.png" style="margin: 0" class="simple inline" />@joelwurtz</a></p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">API Client</h2>
+
+                    <ul>
+                        <li>Twitter</li>
+                        <li>Facebook</li>
+                        <li>Docker</li>
+                        <li>Votre API</li>
+                        <li>...</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">HTTP Client en PHP</h2>
+
+                    <h4>Socket</h4>
+
+                    <pre><code>&lt;?php
+
+$socket = stream_socket_client('tcp://api.mon-api.com');
+fwrite($socket, "GET / HTTP1.1\r\nHost: api.mon-api.com\r\n");
+$response = fread($socket, ...);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">HTTP Client en PHP</h2>
+
+                    <h4>Curl</h4>
+
+                    <pre><code>&lt;?php
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'http://api.mon-api.com');
+$response = curl_exec($ch);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">HTTP Client en PHP</h2>
+
+                    <h4>Guzzle</h4>
+
+                    <pre><code>&lt;?php
+
+$client = new GuzzleHttp\Client();
+$response = $client->request('GET', 'http://api.mon-api.com');</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">HTTP Clients en PHP</h2>
+
+                    <ul>
+                        <li>Socket</li>
+                        <li>Curl</li>
+                        <li>Guzzle 5</li>
+                        <li>Guzzle 6</li>
+                        <li>React</li>
+                        <li>Zend 1</li>
+                        <li>Zend 2</li>
+                        <li>Buzz</li>
+                        <li>Cake</li>
+                        <li>...</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h3 class="center">Mettre à disposition un client pour son API</h3>
+
+                    <p>Quelle dépendance choisir ?</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Conflits ?</h2>
+                    <pre><code>composer require stage1/docker-php
+composer require aws/aws-sdk-php</code></pre>
+                    <pre><code>Your requirements could not be resolved to an
+installable set of packages.
+
+Problem 1
+- Conclusion: don't install guzzlehttp/guzzle 6.1.0
+- Conclusion: don't install guzzlehttp/guzzle 4.2.3
+- Conclusion: don't install guzzlehttp/streams 1.5.1
+- Conclusion: don't install guzzlehttp/guzzle 4.2.2
+- Conclusion: don't install guzzlehttp/streams 1.5.0
+- Conclusion: don't install guzzlehttp/guzzle 6.0.2
+- Conclusion: don't install guzzlehttp/guzzle 4.2.1
+....</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Duplication ?</h2>
+                    <pre><code>vendor
+├── guzzlehttp
+│   └── guzzle
+├── kriswallsmith
+│   └── buzz
+├── react
+│   └── http-client
+├── zendframework
+│   └── zend-http
+└── zf1
+    └── zend-http</code></pre>
+                </section>
+
+
+                <section data-state="jolistate">
+                    <h2 class="center">PSR-7 à la rescousse</h2>
+
+                    <ul>
+                        <li>Psr\Http\Message\RequestInterface</li>
+                        <li>Psr\Http\Message\ResponseInterface</li>
+                        <li>Psr\Http\Message\StreamInterface</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">PSR-7 et Client API</h2>
+
+                    <p>2 rôles : </p>
+                    <ul>
+                        <li>Créer des requêtes (RequestInterface)</li>
+                        <li>Manipuler des réponses (ResponseInterface et StreamInterface)</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h3 class="center">Envoyer les requêtes ?</h3>
+
+                    <p>
+                        Pas votre problème !
+                    </p>
+
+                    <p>
+                        Laisser le choix de l'implementation à l'utilisateur final !
+                    </p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Httplug</h2>
+
+                    <ul>
+                        <li>Contrat(s) pour l'envoie de requêtes HTTP</li>
+                        <li>Succeseur de <a href="https://github.com/egeloen/ivory-http-adapter">ivory-http-adapter</a></li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">HTTP Client</h2>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+interface HttpClient
+{
+    /**
+     * Sends a PSR-7 request.
+     *
+     * @param RequestInterface $request
+     *
+     * @return ResponseInterface
+     *
+     * @throws Exception
+     */
+    public function sendRequest(RequestInterface $request);
+}</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">HTTP Async Client</h2>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+use Psr\Http\Message\RequestInterface;
+use Http\Client\Promise;
+
+interface HttpAsyncClient
+{
+    /**
+     * Sends a PSR-7 request in an asynchronous way.
+     *
+     * @param RequestInterface $request
+     *
+     * @return Promise
+     */
+    public function sendAsyncRequest(RequestInterface $request);
+}</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Promise ?</h2>
+
+                    <ul>
+                        <li>Extension / Inspiration du monde Javascript (Promises/A+)</li>
+                        <li>On "promet" qu'une valeur ou qu'une erreur sera disponible</li>
+                        <li>Fonctionnement par callback</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Promise</h2>
+
+                    <p>Fonctionnement par callback : onFulfilled / onRejected</p>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+$promise = $httpAsyncClient->sendAsyncRequest($request);
+
+$onFulfilled = function (ResponseInterface $response) {
+    echo 'The response is available';
+
+    return $response;
+};
+
+$onRejected = function (Exception $e) {
+    echo 'An error happens';
+
+    throw $e;
+};
+
+$promise->then($onFulfilled, $onRejected);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Promise</h2>
+
+                    <p>Une Promise renvoit toujours une autre Promise</p>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+$promise
+    ->then($onFulfilled, $onRejected);
+    ->then(...)
+;</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Résolution ?</h2>
+
+                    <p>L'asynchrone en PHP, c'est pas vraiment ca ... (sauf si on utilise React PHP)</p>
+
+                    <p>La méthode wait permet de forcer l'attente de la résolution de notre requête</p>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+$promise->wait();</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Virtual Package</h2>
+                    <pre><code>"require": {
+    "php-http/client-implementation": "^1.0"
+},</code></pre>
+
+                    <pre><code>"require": {
+    "php-http/async-client-implementation": "^1.0"
+},</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Implementations</h2>
+
+                    <p><a href="https://packagist.org/providers/php-http/client-implementation">*-adapter</a></p>
+
+                    <ul>
+                        <li>Guzzle 6</li>
+                        <li>React (WIP)</li>
+                        <li>Guzzle 5 (WIP)</li>
+                        <li>Buzz (Prévue)</li>
+                        <li>Zend 1 / 2 (Prévue)</li>
+                        <li>...</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Implementations</h2>
+
+                    <p><a href="https://packagist.org/providers/php-http/client-implementation">*-client</a></p>
+
+                    <ul>
+                        <li>Socket</li>
+                        <li>Curl (WIP)</li>
+                        <li>...</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Créer des requêtes PSR-7</h2>
+
+                    <p>PSR-7 implementations</p>
+
+                    <ul>
+                        <li>guzzle/psr7</li>
+                        <li>zendframework/zend-diactoros</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">php-http/message-factory</h2>
+
+                    <p>
+                        Ensemble d'interfaces permettant l'abstraction des implementations PSR-7...
+                    </p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">MessageFactory</h2>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+public function createRequest(
+    $method,
+    $uri,
+    array $headers = [],
+    $body = null,
+    $protocolVersion = '1.1'
+);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">MessageFactory</h2>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+public function createResponse(
+    $statusCode = 200,
+    $reasonPhrase = null,
+    array $headers = [],
+    $body = null,
+    $protocolVersion = '1.1'
+);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">StreamFactory</h2>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+/**
+* Creates a new PSR-7 stream.
+*
+* @param string|resource|StreamInterface|null $body
+*
+* @return StreamInterface
+*
+* @throws \InvalidArgumentException If the stream body is invalid.
+*/
+public function createStream($body = null);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">UriFactory</h2>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+/**
+* Creates an PSR-7 URI.
+*
+* @param mixed $uri
+*
+* @return UriInterface
+*
+* @throws \InvalidArgumentException If the URI is invalid.
+*/
+public function createUri($uri);</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">php-http/discovery</h2>
+
+                    <p>Instanciation automatique des clients et factory selon les dépendances présentes</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none">HttpClientDiscovery</h2>
+
+                    <p>Création d'un client HTTP</p>
+
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+use Http\Discovery\HttpClientDiscovery;
+
+$client = HttpClientDiscovery::find();</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none; word-wrap: normal">MessageFactoryDiscovery</h2>
+
+                    <p>Création d'une factory pour créer des requêtes PSR-7</p>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+use Http\Discovery\MessageFactoryDiscovery;
+
+$factory = MessageFactoryDiscovery::find();
+$request = $factory->create('GET', 'http://api.mon-api.com/');</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none; word-wrap: normal">Mon client API dans tout ca ?</h2>
+
+                    <p>composer.json</p>
+
+                    <pre><code>"require": {
+    "php-http/client-implementation": "^1.0",
+    "php-http/discovery": "^0.4@dev"
+},</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <p>class ClientApi</p>
+
+                    <pre><code style="overflow: visible; max-height: none">&lt;?php
+
+class ClientApi
+{
+    public function __construct(
+        HttpClient $client = null,
+        MessageFactory $factory = null
+    )
+    {
+        $this->client  = $client ?: HttpClientDiscovery::find();
+        $this->factory = $factory ?: MessageFactoryDiscovery::find();
+    }
+
+    public function getObjects()
+    {
+        return $this->client->sendRequest(
+            $this->messageFactory->create('GET', '/objects')
+        );
+    }
+}</code></pre>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center" style="text-transform: none; word-wrap: normal">Bonus : php-http/plugins</h2>
+
+                    <ul>
+                        <li>Ensemble de "middlewares" permettant de décorer un HttpClient</li>
+                        <li>Approche "Async first"</li>
+                        <li>Mais fonctionne pour les 2 contrats tout en ayant une implémentation unique</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Authentication</h2>
+
+                    <p>Couche d'authentification pour les clients</p>
+
+                    <ul>
+                        <li>Token (Bearer)</li>
+                        <li>BasicAuth</li>
+                        <li>Wsse</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">ContentLength</h2>
+
+                    <ul>
+                        <li>Définit le header ContentLength de la requête selon le flux d'entrée</li>
+                        <li>Si taille incalculable, transforme le flux en "chunked"</li>
+                        <li>Permet l'upload de fichier volumineux sans aucune impact sur la mémoire</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Cookie</h2>
+
+                    <p>Chargement, Sauvegarde des cookies</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Decoder</h2>
+
+                    <p>Décode le flux d'une réponse HTTP (chunked, gzip, compress, deflate)</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Error</h2>
+
+                    <p>Transforme certaines réponses HTTP en Exception (status code 400 à 599)</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Logger</h2>
+
+                    <p>Log les requêtes, réponses et erreurs sous la norme PSR-3</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Redirect</h2>
+
+                    <p>Suit les rédirections d'une réponse HTTP (301, 302, ...)</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Retry</h2>
+
+                    <p>Ressaye automatiquement l'envoie de la requête en cas d'exception</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Stopwatch</h2>
+
+                    <p>Calcule le temps d'appel de la requête avec le composant Stopwatch de Symfony</p>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Bien d'autres à venir...</h2>
+
+                    <ul>
+                        <li>BaseUri (Prefix automatique des Uri)</li>
+                        <li>Journal (Historique)</li>
+                        <li>Vcr (Replay des requêtes HTTP dans les tests)</li>
+                        <li>...</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">PHP-HTTP</h2>
+
+                    <p>Organisation derrière toutes ces librairies</p>
+
+                    <ul>
+                        <li>Actuellement en alpha2 (rc d'ici la fin de l'année)</li>
+                        <li>Bundle Symfony en cours</li>
+                        <li>Librairie utilitaire</li>
+                        <li>Contributions plus que bienvenue :)</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h4 class="center">Arretez d'écrire vos API Clientes !</h4>
+
+                    <h2 class="center">Generez les !</h2>
+                </section>
+
+                <section data-state="jolistate">
+                    <h4 class="center" style="text-transform: none; word-wrap: normal">jane/jane</h4>
+
+                    <ul>
+                        <li>Prend un JSON Schema en entrée</li>
+                        <li>Génère un modèle objet en PHP</li>
+                        <li>Génère les serializer / deserializer de ce modèle (interfaces Symfony/Serializer)</li>
+                        <li>Genère un AST (pas de templating)</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h4 class="center" style="text-transform: none; word-wrap: normal">jane/swagger</h4>
+
+                    <p>Jane++</p>
+
+                    <ul>
+                        <li>Prend une spécification Swagger en entrée (qui "étend" / utilise JSON Schema)</li>
+                        <li>Génère un modèle objet en PHP</li>
+                        <li>Génère les serializer / deserializer de ce modèle (interfaces Symfony/Serializer)</li>
+                        <li>Génère les appels API (utilise Httplug)</li>
+                        <li>Genère un AST (pas de templating)</li>
+                    </ul>
+                </section>
+
+                <section data-state="jolistate">
+                    <h2 class="center">Merci !</h2>
+
+                    <ul>
+                        <li><a href="http://httplug.io">http://httplug.io</a></li>
+                        <li><a href="https://github.com/php-http">https://github.com/php-http</a></li>
+                        <li><a href="http://php-http.readthedocs.org/en/latest/">http://php-http.readthedocs.org/en/latest/</a></li>
+                        <li><a href="https://github.com/jolicode/jane-swagger">https://github.com/jolicode/jane-swagger</a></li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+
+        <footer class="joli">
+            Liberez vous de votre client HTTP avec PSR7 et Httplug. - Forum PHP 2015 - <img src="lib/font/logo-fond-noir.svg" style="height:1em; vertical-align: text-bottom;" /> @joelwurtz
+        </footer>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.min.js"></script>
+        <script>
+            // Full list of configuration options available here:
+            // https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                controls: true,
+                progress: true,
+                history: true,
+                center: true,
+
+                theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+                transition: Reveal.getQueryHash().transition || 'none', // default/cube/page/concave/zoom/linear/fade/none
+
+                // Parallax scrolling
+                // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+                // parallaxBackgroundSize: '2100px 900px',
+
+                // Optional libraries used to extend on reveal.js
+                dependencies: [
+                    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                    { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                    { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+                    { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+                ]
+            });
+        </script>
+    </body>
+</html>
